@@ -10,20 +10,32 @@ from diagrams.onprem.queue import Kafka
 
 with Diagram(show=False):
     users = Users("Users")
-    web_app = Server("Web application")
-    application = Server("Loan application")
 
     with Cluster("Entrypoint"):
         entrypoint = [Haproxy(), Nginx()]
 
+    with Cluster("Loan application"):
+        application = Server()
+
     with Cluster("Third party integrations"):
         integrations = [Internet(), PostgreSQL()]
 
-    with Cluster("Queue"):
-        queue = [Kafka(), Kafka(), Kafka()]
+    with Cluster("Customer requests"):
+
+        with Cluster("Web application"):
+            web_app = Server()
+
+        with Cluster("Queue"):
+            with Cluster("Queue"):
+                queue = Kafka()
+
+            with Cluster("App"):
+                app = Server()
 
     with Cluster("Datastore"):
         datastore = Storage() - Storage()
 
     users >> entrypoint >> web_app >> queue >> application >> integrations
-    application >> datastore
+    web_app >> app >> datastore
+    app >> application
+    queue >> datastore
